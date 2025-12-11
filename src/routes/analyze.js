@@ -24,7 +24,7 @@ router.post("/", upload.single("file"), async (req, res) => {
 
   try {
     // if FNOL text is provided
-    let text = req.body?.text; 
+    let text = req.body?.text;
 
     // If text not provided, fallback to PDF upload
     if (!text) {
@@ -32,21 +32,32 @@ router.post("/", upload.single("file"), async (req, res) => {
       if (!file)
         return res
           .status(400)
-          .json({ error: "Provide either FNOL text or a PDF file" });
+          .json({ error: "Provide FNOL text, a PDF file, or a TXT file" });
 
       filePath = file.path;
 
-      // Only pdf file is supported
-      if (!file.mimetype || !file.mimetype.includes("pdf")) {
-        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-        return res.status(400).json({ error: "Only PDF files are supported" });
+      const mime = file.mimetype;
+
+      // TXT support
+      if (mime && mime.includes("text/plain")) {
+        if (!filePath) throw new Error("TXT file path missing");
+        text = fs.readFileSync(filePath, "utf-8");
+      }
+      // PDF support
+      else if (mime && mime.includes("pdf")) {
+        if (!filePath) throw new Error("PDF file path missing");
+        text = await extractTextFromPDF(filePath);
+      }
+      // Unsupported file
+      else {
+        if (filePath && fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        return res
+          .status(400)
+          .json({ error: "Only PDF or TXT files are supported" });
       }
 
-      // Extract text from PDF
-      text = await extractTextFromPDF(filePath);
-      if (!text || text.trim().length === 0) {
-        throw new Error("PDF appears to be empty or could not extract text");
-      }
+      if (!text || text.trim().length === 0)
+        throw new Error("File appears empty or unreadable");
     }
 
     const fields = await extractFields(text);
