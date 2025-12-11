@@ -23,27 +23,30 @@ router.post("/", upload.single("file"), async (req, res) => {
   let filePath = null;
 
   try {
-    const file = req.file;
+    // if FNOL text is provided
+    let text = req.body?.text; 
 
-    if (!file) {
-      return res.status(400).json({ error: "No file uploaded" });
-    }
+    // If text not provided, fallback to PDF upload
+    if (!text) {
+      const file = req.file;
+      if (!file)
+        return res
+          .status(400)
+          .json({ error: "Provide either FNOL text or a PDF file" });
 
-    filePath = file.path;
+      filePath = file.path;
 
-    // Validate file type
-    if (!file.mimetype || !file.mimetype.includes("pdf")) {
-      // Clean up invalid file
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
+      // Only pdf file is supported
+      if (!file.mimetype || !file.mimetype.includes("pdf")) {
+        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        return res.status(400).json({ error: "Only PDF files are supported" });
       }
-      return res.status(400).json({ error: "Only PDF files are supported" });
-    }
 
-    const text = await extractTextFromPDF(filePath);
-
-    if (!text || text.trim().length === 0) {
-      throw new Error("PDF appears to be empty or could not extract text");
+      // Extract text from PDF
+      text = await extractTextFromPDF(filePath);
+      if (!text || text.trim().length === 0) {
+        throw new Error("PDF appears to be empty or could not extract text");
+      }
     }
 
     const fields = await extractFields(text);
