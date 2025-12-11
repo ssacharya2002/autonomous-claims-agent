@@ -13,10 +13,13 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "@ai-sdk/groq": "^2.0.33",
+    "ai": "^5.0.112",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "multer": "^2.0.2",
-    "pdfjs-dist": "^5.4.449"
+    "pdfjs-dist": "^5.4.449",
+    "zod": "^3.25.76"
   }
 }
