@@ -1,7 +1,8 @@
 import express from "express";
 import dotenv from "dotenv";
-
 import cors from "cors";
+
+import analyzeRouter from "./routes/analyze.js";
 
 dotenv.config();
 
@@ -21,7 +22,7 @@ app.get("/health", (req, res) => {
 });
 
 
-// app.use("/analyze", analyzeRouter);
+app.use("/analyze", analyzeRouter);
 
 
 // Error handling middleware
